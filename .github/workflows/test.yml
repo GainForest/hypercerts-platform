@@ -35,4 +35,41 @@ jobs:
       
       - run: bun run build
         env:
-          CMS_ENDPOINT: ${{ secrets.CMS_ENDPOINT }}
+          name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    environment: Production  # Add this line to use Production environment secrets
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 'latest'
+          
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          
+      - run: bun install --frozen-lockfile
+        continue-on-error: true
+        
+      - run: bun install --frozen-lockfile
+      
+      - run: bun run build
+        env:
+          NEXT_PUBLIC_WC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_WC_PROJECT_ID }}
