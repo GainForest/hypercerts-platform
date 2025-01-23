@@ -17,32 +17,32 @@ import Script from "next/script";
 const baskerville = localFont({
 	src: [
 		{
-			path: "./fonts/BaskervilleDisplayPT/Regular.otf",
+			path: "./fonts/BaskervilleDisplayPT/Regular.ttf",
 			weight: "400",
 			style: "normal",
 		},
 		{
-			path: "./fonts/BaskervilleDisplayPT/Italic.otf",
+			path: "./fonts/BaskervilleDisplayPT/Italic.ttf",
 			weight: "400",
 			style: "italic",
 		},
 		{
-			path: "./fonts/BaskervilleDisplayPT/Medium.otf",
+			path: "./fonts/BaskervilleDisplayPT/Medium.ttf",
 			weight: "500",
 			style: "normal",
 		},
 		{
-			path: "./fonts/BaskervilleDisplayPT/MediumItalic.otf",
+			path: "./fonts/BaskervilleDisplayPT/MediumItalic.ttf",
 			weight: "500",
 			style: "italic",
 		},
 		{
-			path: "./fonts/BaskervilleDisplayPT/Bold.otf",
+			path: "./fonts/BaskervilleDisplayPT/Bold.ttf",
 			weight: "700",
 			style: "normal",
 		},
 		{
-			path: "./fonts/BaskervilleDisplayPT/BoldItalic.otf",
+			path: "./fonts/BaskervilleDisplayPT/BoldItalic.ttf",
 			weight: "700",
 			style: "italic",
 		},
