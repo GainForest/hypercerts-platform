@@ -14,12 +14,13 @@ export interface HypercertCardProps {
 	workEndDate?: Date;
 	displayOnly?: boolean;
 	hypercertId?: string;
+	contributors?: string[];
 }
 
 const HypercertCard = forwardRef<HTMLDivElement, HypercertCardProps>(
 	(
 		{
-			title = "Your title here",
+			title = "Hypercert Title",
 			description = "Your description here",
 			badges,
 			banner,
@@ -28,6 +29,7 @@ const HypercertCard = forwardRef<HTMLDivElement, HypercertCardProps>(
 			logo,
 			hypercertId,
 			displayOnly = false,
+			contributors = [],
 		}: HypercertCardProps,
 		ref,
 	) => {
@@ -103,16 +105,22 @@ const HypercertCard = forwardRef<HTMLDivElement, HypercertCardProps>(
 					>
 						{title}
 					</h5>
+					<p className="line-clamp-2 text-slate-600 text-sm">{description}</p>
+					{Array.isArray(contributors) && contributors.length > 0 && (
+						<div className="flex flex-col gap-1">
+							<div className="flex flex-wrap gap-1">
+								{contributors.map((address: string) => (
+									<Badge key={address} variant="outline">
+										{address && `${address.slice(0, 6)}...${address.slice(-4)}`}
+									</Badge>
+								))}
+							</div>
+						</div>
+					)}
 					<ScrollArea className="h-[50px]">
 						<div className="flex flex-wrap gap-1">
-							{badges?.map((badge, index) => (
-								<Badge
-									key={`${badge}-${
-										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-										index
-									}`}
-									variant="secondary"
-								>
+							{badges?.map((badge) => (
+								<Badge key={badge} variant="secondary">
 									{badge}
 								</Badge>
 							))}

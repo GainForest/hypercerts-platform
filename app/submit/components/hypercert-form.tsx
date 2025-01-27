@@ -76,19 +76,16 @@ const HypercertMintSchema = z.object({
 		.refine((data) => {
 			return Boolean(data[0] || data[1]);
 		}, "Work date range is required"),
-	contributors: z
-		.string()
-		.refine(
-			(value) => {
-				const addresses = value.split(", ").map((addr) => addr.trim());
-				return addresses.every((address) => isValidEthereumAddress(address));
-			},
-			{
-				message:
-					"Each value must be a valid Ethereum address separated by a comma and a space.",
-			},
-		)
-		.transform((value) => value.split(",").map((addr) => addr.trim())),
+	contributors: z.string().refine(
+		(value) => {
+			const addresses = value.split(", ").map((addr) => addr.trim());
+			return addresses.every((address) => isValidEthereumAddress(address));
+		},
+		{
+			message:
+				"Each value must be a valid Ethereum address separated by a comma and a space.",
+		},
+	),
 	contact: z
 		.string()
 		.refine(
@@ -108,7 +105,7 @@ type MintingFormValues = z.infer<typeof HypercertMintSchema>;
 
 const HypercertForm = () => {
 	const imageRef = useRef<HTMLDivElement | null>(null);
-	const [badges, setBadges] = useState(["GainForest.Earth", "Hyperforest"]);
+	const [badges, setBadges] = useState<string[]>([]);
 	const [openMintDialog, setOpenMintDialog] = useState(false);
 	const [geoJSONFile, setGeoJSONFile] = useState<File | null>(null);
 	const {
@@ -130,9 +127,9 @@ const HypercertForm = () => {
 		defaultValues: {
 			title: "",
 			banner:
-				"https://images.lemonade.social/eyJidWNrZXQiOiJsZW1vbmFkZS11cGxvYWRzLWV1LWNlbnRyYWwtMSIsImtleSI6IjY2MDQ4MDM0NzdjNzgzZjBmYmQ1ZDBlMS9ldmVudC82NjI0NGRlZjE1MTFhYjFlOTExYmQ1NzQucG5nIiwiZWRpdHMiOnsicmVzaXplIjp7ImhlaWdodCI6NTQwLCJmaXQiOiJjb3ZlciJ9fX0=",
+				"https://pub-c2c1d9230f0b4abb9b0d2d95e06fd4ef.r2.dev/sites/93/2019/05/My-Post-9-1600x900.png",
 			description: "",
-			logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSk8OYV3qda3Xf6p_wHHCh4uEDiKOLiB0652A&s",
+			logo: "https://pbs.twimg.com/profile_images/1674865118914437130/9HjAHrYf_400x400.jpg",
 			link: "",
 			tags: "",
 			projectDates: [undefined, undefined],
@@ -151,9 +148,9 @@ const HypercertForm = () => {
 				.split(",")
 				.map((tag) => tag.trim())
 				.filter((tag) => tag !== "");
-			setBadges(["GainForest.Earth", "Hyperforest", ...tagArray]);
+			setBadges([...tagArray]);
 		} else {
-			setBadges(["GainForest.Earth", "Hyperforest"]);
+			setBadges([]);
 		}
 	}, [tags]);
 
@@ -223,7 +220,7 @@ const HypercertForm = () => {
 					(values.projectDates[0] ?? new Date()).getTime() / 1000,
 				impactTimeframeEnd:
 					(values.projectDates[1] ?? new Date()).getTime() / 1000,
-				contributors: values.contributors,
+				contributors: values.contributors.split(", ").filter(Boolean),
 			});
 
 			if (!formattedMetadata.valid || !formattedMetadata.data) {
@@ -264,10 +261,7 @@ const HypercertForm = () => {
 												<FormItem>
 													<FormLabel>Hypercert Name</FormLabel>
 													<FormControl>
-														<Input
-															placeholder="GainForest.Earth Hypercert"
-															{...field}
-														/>
+														<Input placeholder="Hypercert Title" {...field} />
 													</FormControl>
 													<FormMessage />
 												</FormItem>
@@ -281,7 +275,6 @@ const HypercertForm = () => {
 													<FormLabel>Logo Image</FormLabel>
 													<FormControl>
 														<Input
-															disabled
 															placeholder="https://i.imgur.com/hypercert-logo.png"
 															{...field}
 														/>
@@ -298,7 +291,6 @@ const HypercertForm = () => {
 													<FormLabel>Background Banner Image</FormLabel>
 													<FormControl>
 														<Input
-															disabled
 															placeholder="https://i.imgur.com/hypercert-banner.png"
 															{...field}
 														/>
@@ -691,6 +683,9 @@ const HypercertForm = () => {
 								workEndDate={form.watch("projectDates.1")}
 								badges={badges}
 								displayOnly={true}
+								contributors={
+									form.watch("contributors")?.split(", ").filter(Boolean) || []
+								}
 								ref={imageRef}
 							/>
 						</div>
