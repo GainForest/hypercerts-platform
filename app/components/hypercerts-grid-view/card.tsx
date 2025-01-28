@@ -21,7 +21,7 @@ const Card = ({ hypercert }: { hypercert: Hypercert }) => {
 		chainId,
 	} = hypercert;
 
-	const cardChain = supportedChains.find((x) => x.id === Number(chainId))?.name;
+	const chainName = supportedChains.find((x) => x.id === Number(chainId))?.name;
 	const percentAvailable = calculateBigIntPercentage(unitsForSale, totalUnits);
 	return (
 		<Link href={`/hypercert/${hypercertId}`} passHref>
@@ -40,7 +40,7 @@ const Card = ({ hypercert }: { hypercert: Hypercert }) => {
 				</div>
 				<section className="absolute top-4 left-4 flex space-x-1 opacity-100 transition-opacity duration-150 ease-out group-hover:opacity-100 md:opacity-0">
 					<div className="rounded-md border border-white/60 bg-black px-2 py-0.5 text-white text-xs shadow-sm">
-						{cardChain}
+						{chainName ?? "Unknown chain"}
 					</div>
 					<div className="rounded-md border border-black/60 bg-black px-2 py-0.5 text-white text-xs shadow-sm">
 						approved
@@ -69,14 +69,13 @@ const Card = ({ hypercert }: { hypercert: Hypercert }) => {
 					>
 						{description ?? "..."}
 					</p>
-					{unitsForSale === undefined ? (
+					{pricePerPercentInUSD === undefined ? (
 						<div className="flex w-full items-center justify-start text-muted-foreground text-sm">
-							<span className="inline-block rounded-full bg-destructive/20 px-2 text-destructive">
+							<span className="inline-block rounded-full bg-beige-muted px-2 text-beige-muted-foreground">
 								Coming Soon...
 							</span>
 						</div>
-					) : percentAvailable === undefined ||
-					  pricePerPercentInUSD === undefined ? (
+					) : unitsForSale === undefined || unitsForSale === 0n ? (
 						<div className="flex w-full items-center justify-start text-muted-foreground text-sm">
 							<span className="inline-block rounded-full bg-destructive/20 px-2 text-destructive">
 								Sold
@@ -84,10 +83,14 @@ const Card = ({ hypercert }: { hypercert: Hypercert }) => {
 						</div>
 					) : (
 						<>
-							<Progress percentage={100 - percentAvailable} />
+							<Progress percentage={100 - (percentAvailable ?? 0)} />
 							<div className="flex w-full items-center justify-start text-muted-foreground text-sm">
 								<span className="inline-block rounded-full bg-primary/20 px-2 text-primary">
-									${(percentAvailable * pricePerPercentInUSD).toFixed(2)} left
+									$
+									{Math.floor(
+										(percentAvailable ?? 0) * pricePerPercentInUSD * 100,
+									) / 100}{" "}
+									left
 								</span>
 							</div>
 						</>
