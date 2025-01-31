@@ -18,7 +18,7 @@ const Progress = ({
 			<motion.div
 				className="h-full bg-primary"
 				initial={{ width: "0%" }}
-				animate={{ width: `${5 + (percentage / 100) * 95}%` }}
+				animate={{ width: `${2 + (percentage / 100) * 99}%` }}
 				transition={{ duration: 0.5 }}
 			/>
 		</div>
