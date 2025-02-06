@@ -62,6 +62,7 @@ export default function MapRenderer({ uri }: MapRendererProps) {
 				}
 
 				const cid = match[1];
+				const TRACE_ENDPOINT = "https://www.trace.gainforest.app/?geojsonUrl=";
 				const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${cid}`;
 				const gcpUrl = `https://storage.googleapis.com/ecocertain-public/${cid}.geojson`;
 
@@ -86,7 +87,7 @@ export default function MapRenderer({ uri }: MapRendererProps) {
 				}
 
 				setMapData({
-					baseUrl: finalUrl,
+					baseUrl: TRACE_ENDPOINT + finalUrl,
 					metadata: validationResult.data as HypercertMetadata,
 				});
 			} catch (error) {
