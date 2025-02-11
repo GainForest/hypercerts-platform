@@ -64,7 +64,7 @@ export default function MapRenderer({ uri }: MapRendererProps) {
 				const cid = match[1];
 				const TRACE_ENDPOINT = "https://www.trace.gainforest.app/?geojsonUrl=";
 				const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${cid}`;
-				const gcpUrl = `https://storage.googleapis.com/ecocertain-public/${cid}.geojson`;
+				const gcpUrl = `https://storage.googleapis.com/ecocertain-public/geojson/${cid}.geojson`;
 
 				// Try IPFS gateway first, fallback to GCP
 				let finalUrl: string;
