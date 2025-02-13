@@ -36,17 +36,10 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import {
-	type HypercertMetadata,
-	formatHypercertData,
-} from "@hypercerts-org/sdk";
 
-import { Dialog } from "@/components/ui/dialog";
-import useMintHypercert from "@/hooks/use-mint-hypercert";
 import { toPng } from "html-to-image";
-import { normalize } from "viem/ens";
 import HypercertCard from "./hypercert-card";
-import { HypercertMintDialog } from "./hypercert-mint-dialog";
+import MintingProgressDialog from "./minting-progress-dialog";
 
 const telegramHandleRegex = /^@([a-zA-Z0-9_]{4,31})$/;
 const emailRegex =
@@ -140,29 +133,19 @@ const HypercertMintSchema = z
 		},
 	);
 
-type MintingFormValues = z.infer<typeof HypercertMintSchema>;
+export type MintingFormValues = z.infer<typeof HypercertMintSchema>;
 
 const HypercertForm = () => {
 	const imageRef = useRef<HTMLDivElement | null>(null);
 	const [badges, setBadges] = useState<string[]>([]);
-	const [openMintDialog, setOpenMintDialog] = useState(false);
 	const [geoJSONFile, setGeoJSONFile] = useState<File | null>(null);
 	const [geoJSONArea, setGeoJSONArea] = useState<number | null>(null);
 	const [showCopied, setShowCopied] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
-	const {
-		mintHypercert,
-		mintStatus,
-		mintData,
-		mintError,
-		isReceiptLoading,
-		isReceiptSuccess,
-		isReceiptError,
-		receiptData,
-		receiptError,
-		googleSheetsStatus,
-		googleSheetsError,
-	} = useMintHypercert();
+	const [isMintingProgressDialogVisible, setIsMintingProgressDialogVisible] =
+		useState(false);
+	const [mintingFormValues, setMintingFormValues] =
+		useState<MintingFormValues>();
 
 	const form = useForm<MintingFormValues>({
 		resolver: zodResolver(HypercertMintSchema),
@@ -370,102 +353,6 @@ const HypercertForm = () => {
 		return dataUrl;
 	};
 
-	const onSubmit = useCallback(
-		async (values: MintingFormValues) => {
-			const image = await generateImage();
-			if (!image) {
-				console.error("Failed to generate image");
-				return;
-			}
-
-			let geoJSONData = null;
-			if (values.geojson) {
-				try {
-					const response = await fetch(values.geojson);
-					geoJSONData = await response.json();
-				} catch (error) {
-					console.error("Error fetching GeoJSON:", error);
-				}
-			} else if (geoJSONFile) {
-				try {
-					const text = await geoJSONFile.text();
-					geoJSONData = JSON.parse(text);
-				} catch (error) {
-					console.error("Error parsing GeoJSON file:", error);
-				}
-			}
-
-			let geoJSONipfsLink = null;
-			try {
-				const ipfsUploadResponse = await fetch("/api/ipfs-upload", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(geoJSONData),
-				});
-
-				const data = await ipfsUploadResponse.json();
-				geoJSONipfsLink = data.link;
-			} catch (error) {
-				console.log("Error uploading GeoJSON to IPFS:", error);
-			}
-
-			const metadata: HypercertMetadata = {
-				name: values.title,
-				description: values.description,
-				image: image,
-				external_url: values.link,
-			};
-
-			const formattedMetadata = formatHypercertData({
-				...metadata,
-				version: "2.0",
-				properties: [
-					{
-						trait_type: "geoJSON", //human readable
-						type: "application/geo+json", //MIME type
-						src: geoJSONipfsLink, //IPFS link
-						name: `${
-							values.title
-								.toLowerCase()
-								.replace(/[^a-z0-9]+/g, "-") // Replace any non-alphanumeric chars with single dash
-								.replace(/^-+|-+$/g, "") // Remove leading/trailing dashes
-						}.geojson`,
-					},
-				],
-				impactScope: ["all"],
-				excludedImpactScope: [],
-				workScope: badges,
-				excludedWorkScope: [],
-				rights: ["Public Display"],
-				excludedRights: [],
-				workTimeframeStart:
-					(values.projectDates[0] ?? new Date()).getTime() / 1000,
-				workTimeframeEnd:
-					(values.projectDates[1] ?? new Date()).getTime() / 1000,
-				impactTimeframeStart:
-					(values.projectDates[0] ?? new Date()).getTime() / 1000,
-				impactTimeframeEnd:
-					(values.projectDates[1] ?? new Date()).getTime() / 1000,
-				contributors: values.contributors.split(", ").filter(Boolean),
-			});
-
-			if (!formattedMetadata.valid || !formattedMetadata.data) {
-				console.log("Invalid metadata");
-				return;
-			}
-
-			console.log("formattedMetadata", formattedMetadata);
-
-			mintHypercert({
-				metaData: formattedMetadata.data,
-				contactInfo: values.contact,
-				amount: "1",
-			});
-			setOpenMintDialog(true);
-		},
-		[badges, mintHypercert, generateImage, geoJSONFile],
-	);
-
 	const getTracePreviewUrl = (
 		geojsonData: {
 			features?: Array<{ geometry: { coordinates: number[][] } }>;
@@ -545,9 +432,24 @@ const HypercertForm = () => {
 	};
 
 	return (
-		<Dialog open={openMintDialog} onOpenChange={setOpenMintDialog}>
+		<>
+			<MintingProgressDialog
+				{...{
+					mintingFormValues,
+					generateImage,
+					geoJSONFile,
+					badges,
+					visible: isMintingProgressDialogVisible,
+					setVisible: setIsMintingProgressDialogVisible,
+				}}
+			/>
 			<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)}>
+				<form
+					onSubmit={form.handleSubmit((values) => {
+						setMintingFormValues(values);
+						setIsMintingProgressDialogVisible(true);
+					})}
+				>
 					<div className="mb-10 flex flex-col-reverse gap-6 md:mb-0 md:flex-row md:gap-4">
 						<Card className="relative overflow-hidden rounded-3xl bg-white/50 py-4 shadow-none">
 							<div className="-top-10 -right-10 absolute h-40 w-40 rounded-full bg-primary/30 blur-2xl" />
@@ -749,6 +651,7 @@ const HypercertForm = () => {
 																align="start"
 															>
 																<Calendar
+																	className="h-[340px]"
 																	initialFocus
 																	mode="range"
 																	defaultMonth={field.value?.[0]}
@@ -759,10 +662,6 @@ const HypercertForm = () => {
 																	onSelect={(range) => {
 																		console.log(range, field);
 																		field.onChange([range?.from, range?.to]);
-																		// field.onChange({
-																		//   workStartDate: range?.from,
-																		//   workEndDate: range?.to,
-																		// });
 																		console.log(field.value);
 																	}}
 																	numberOfMonths={2}
@@ -958,20 +857,7 @@ const HypercertForm = () => {
 					</div>
 				</form>
 			</Form>
-			<HypercertMintDialog
-				mintStatus={mintStatus}
-				mintData={mintData}
-				mintError={mintError}
-				isReceiptLoading={isReceiptLoading}
-				isReceiptSuccess={isReceiptSuccess}
-				isReceiptError={isReceiptError}
-				receiptError={receiptError}
-				receiptData={receiptData}
-				googleSheetsStatus={googleSheetsStatus}
-				googleSheetsError={googleSheetsError}
-				setOpenMintDialog={setOpenMintDialog}
-			/>
-		</Dialog>
+		</>
 	);
 };
 
